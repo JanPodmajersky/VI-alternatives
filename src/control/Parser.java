@@ -31,6 +31,7 @@ public class Parser {
 					
 					if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 						Element eElement = (Element) nNode;
+						
 						NodeList pageList = eElement.getElementsByTagName("revision");
 						
 						for (int k = 0; k < pageList.getLength(); k++) {
