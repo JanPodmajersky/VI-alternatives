@@ -2,13 +2,20 @@ package control;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
+
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.json.simple.JSONArray;  
+import org.json.simple.JSONObject;  
 
 public class Parser {
 	
@@ -82,6 +89,32 @@ public class Parser {
 							    if(m.find()) {
 							    	strAlternativeName = m.group(2);
 							    	System.out.println("alternative names '"+strAlternativeName );
+							    	//parse more names
+							    	
+							    	JSONObject alternativeObj = new JSONObject();  
+							    	alternativeObj.put("Name", Name);  
+							        
+							        JSONArray listOfAlternatives = new JSONArray();  
+							        listOfAlternatives.add(strAlternativeName.trim());  
+							          
+							  
+							        alternativeObj.put("Alternatives", listOfAlternatives);  
+							  
+							        try {  
+							              
+							            // Writing to a file  
+							            File file = new File("output.json");  
+							            file.createNewFile();  
+							            FileWriter fileWriter = new FileWriter(file);  
+
+							            fileWriter.write(alternativeObj.toJSONString());  
+							            fileWriter.flush();  
+							            fileWriter.close();  
+
+							        }catch(IOException  E){
+							            E.printStackTrace();  	
+							        }
+							    	
 							    }
 						    	
 						    }
