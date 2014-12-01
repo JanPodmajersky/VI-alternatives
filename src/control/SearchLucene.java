@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +30,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
@@ -108,10 +112,17 @@ public class SearchLucene
 		
 		for(JSONObject object : (List<JSONObject>) jsonObjects){
 			Document doc = new Document();
-			for(String field : (Set<String>) object.keySet()){			
-				doc.add(new StringField(field, (String) object.get(field),
-							Field.Store.YES));//NO
+			for(String field : (Set<String>) object.keySet()){		
+				if(field.compareTo("Alternative") != 0){
+					doc.add(new StringField(field, (String) object.get(field),Field.Store.YES));//NO
+				}else{
+					JSONArray arr = (JSONArray) object.get(field);
+					for (int i=0; i < arr.size(); i++) {
+						doc.add(new StringField(field, (String) arr.get(i),Field.Store.YES));//NO
+					}
+				}
 				//System.out.println(doc);
+				//tu je problem s arrayfield
 			}
 			try {
 				indexWriter.addDocument(doc);
@@ -130,17 +141,67 @@ public class SearchLucene
 		 finish();
 	 }
 	 
-	 public void Test(){
+	 public void Stats(){
 		 
 		 try {
 			 Directory indexDirectory = FSDirectory.open(new File("indexDir"));
 			 IndexReader indexReader = DirectoryReader.open(indexDirectory);
 			 int numDocs = indexReader.numDocs();
+			 int allALternatives = 0;
+			 int currAlternatives = 0;
+			 int altLength = 0;
+			 int max = 0, min = 1000, maxA = 0, minA = 1000;
+			 double avgLengthCurrAlt,altRatio = 0;
+			 
+			 NumberFormat formatter = new DecimalFormat("#0.0000"); 
 			 
 			 for ( int i = 0; i < numDocs; i++){
 				 Document document = indexReader.document( i);
-				 System.out.println( "d=" +document);
+				 //System.out.println( "d=" +document);
+				 
+				 if (max < document.getFields("Alternative").length)
+					 max = document.getFields("Alternative").length;
+				 
+
+				 if (min > document.getFields("Alternative").length)
+					 min = document.getFields("Alternative").length;
+				 
+				 altLength = 0;
+				 int j = 0;
+				 for(IndexableField s :document.getFields("Alternative") ){	  
+			    	 if(s.stringValue().compareTo("") != 0){//exists alternative name
+			    		 currAlternatives += s.stringValue().length();
+			    		 if (maxA < s.stringValue().length())
+							 maxA = s.stringValue().length();
+			    		 if (minA > s.stringValue().length())
+							 minA = s.stringValue().length();
+			    		 
+			    		 System.out.println(s.stringValue());
+			    		 ++allALternatives;
+			    		 altLength +=  s.stringValue().length();
+			    		 j++;
+			    	 }
+				 }
+				 if(j != 0){
+					 avgLengthCurrAlt = ((double)altLength/(double)j);
+					 altRatio += (document.get("Name").length()/avgLengthCurrAlt);
+				 }
+				 int pes = 5;
+				 
 			 }
+			 double avgAlt = ((double)allALternatives)/((double)numDocs);
+			 double avgAltlength = ((double)currAlternatives)/((double)allALternatives);
+			 double avgAltlengthRatio = ((double)altRatio)/((double)allALternatives);
+			 
+			 System.out.println("All documents: "+numDocs);
+			 System.out.println("All alternatives: "+allALternatives);
+			 System.out.println("Avg num of alternatives: "+formatter.format(avgAlt));
+			 System.out.println("Max num of alternatives: "+max);
+			 System.out.println("Min num of alternatives: "+min);
+			 System.out.println("Avg length of alternatives: "+formatter.format(avgAltlength));
+			 System.out.println("Max length of alternatives: "+maxA);
+			 System.out.println("Min length of alternatives: "+minA);
+			 System.out.println("Avg ratio of alternatives and names: "+formatter.format(avgAltlengthRatio));
 		 
 	 	} catch (Exception e) {
 	 		e.printStackTrace();
@@ -187,7 +248,11 @@ public class SearchLucene
 		    for(int i=0;i<hits.length;++i) {
 		      int docId = hits[i].doc;
 		      Document d = searcher.doc(docId);
-		      System.out.println((i + 1) + ". " + d.get("Name") + "\t" + d.get("Alternative"));
+		      System.out.println((i + 1) + ". " + d.get("Name") + "\t" );
+		     
+			  for(IndexableField s :d.getFields("Alternative") ){	  
+			    	 System.out.println(s.stringValue());
+			  }
 		    }
 			 
 			 

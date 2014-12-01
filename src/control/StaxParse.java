@@ -32,8 +32,7 @@ public class StaxParse {
 	public ArrayList<WikiData> Wikis;
 
 	public void parse(String filename){	
-		
-		AlternativeNames = new ArrayList<ArrayList<String>>();
+	
 		Names = new ArrayList<String>();
 		Wikis = new ArrayList<WikiData>();
 		
@@ -42,6 +41,7 @@ public class StaxParse {
 		
 		 
 		final JSONArray listOfAlternatives = new JSONArray();
+		
 		
 		try {
 			 
@@ -157,38 +157,42 @@ public class StaxParse {
 							    //parse AKA
 							    r = Pattern.compile("(\\|\\s*AKA\\s*=)(.*?)(\\|)", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 							    m = r.matcher(Infobox);//
+							    JSONArray listOfAlternativeNames = new JSONArray();
 							    
 							    if(m.find()) {
 							    	strAlternativeName = m.group(2).trim();
 							    	//System.out.println("alternative names '"+strAlternativeName );
 							    	
-							    	//parse more names, teraz su iba v 1 stringu vsetky, asi uvidim ake to je, ale to bude jednoduche
+							    	String[] split = strAlternativeName.split("<br>");
 							    	
-							    	Alt = new ArrayList<String>();
-							    	Alt.add(strAlternativeName);						    	
-							    	AlternativeNames.add(Alt);
-	
-							        //listOfAlternatives.add(strAlternativeName);  						  
+							    	
+									for(String alternative: split){
+										listOfAlternativeNames.add(alternative);
+										//System.out.print(alternative);
+							    	}
+									
+							    
+							    	//listOfAlternativeNames.add(strAlternativeName);
+							    	//listOfAlternativeNames.add("socka");		
+							    	//parse more names, teraz su iba v 1 stringu vsetky, asi uvidim ake to je, ale to bude jednoduche					  
 							        
 							    }else{
-							    	Alt = new ArrayList<String>();
-							    	Alt.add("");						    	
-							    	AlternativeNames.add(Alt);
-	
-							        //listOfAlternatives.add("");  						  
+							    	listOfAlternativeNames.add("");
 							         
 							    }
+							    //,
+							    //<br \/>
 							    
 							    Wiki = new WikiData(Name,strAlternativeName);
 						    	Wikis.add(Wiki);
 						    
 						    	alternativeObj = new JSONObject();
 						    	alternativeObj.put("Name", Name);
-						    	alternativeObj.put("Alternative", strAlternativeName);
+						    	alternativeObj.put("Alternative", listOfAlternativeNames);
 						    	
 						    	listOfAlternatives.add(alternativeObj);
-						    	strAlternativeName = "";
-						    	Name = "";
+						    	//strAlternativeName = "";
+						    	//Name = "";
 						    }
 					    }
 					    
